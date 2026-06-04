@@ -21,8 +21,43 @@ export default function Home() {
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({message:input}),
       })
-      const data = await response.json()
-      setReply(data.reply)
+
+      // Read loop
+      if (!response.body) throw new Error("No response body")
+      let buffer = ""
+      let error = false
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      while (true) {
+        if (error) break
+        const {done, value} = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, {stream: true})
+        const parts = buffer.split("\n\n")
+        buffer = parts.pop() ?? "" // Last piece of data
+
+        for (const part of parts) {
+          if (!part.trim()) continue
+          const json = part.replace("data: ", "")
+          const event = JSON.parse(json)
+          if (event.type === "content") {
+            setReply(prev => prev + event.data)
+          } else if (event.type === "error") {
+            setReply(event.data.message)
+            error = true
+            break
+          }
+        }
+      }
+
+      // Flushing the buffer
+      if (buffer.trim()) {
+        const json = buffer.replace("data: ", "")
+        const event = JSON.parse(json)
+        if (event.type === "content") {
+          setReply(prev => prev + event.data)
+        }
+      }
     }
     catch {
       setReply("Could not fetch a response. Please try again.")

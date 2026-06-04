@@ -1,33 +1,26 @@
-import { AIProjectClient } from "@azure/ai-projects";
-import { DefaultAzureCredential } from "@azure/identity";
-import { NextRequest,NextResponse } from "next/server";
+// SSE Streaming endpoint for chat
 
-const endpoint = process.env.AZURE_FOUNDRY_ENDPOINT!;
-const agentId = process.env.AZURE_AGENT_ID!;
+import { NextRequest } from "next/server";
+import { orchestrate } from "@/lib/agentOrchestrator";
 
 export async function POST(req: NextRequest) {
     const {message} = await req.json();
 
     if (!message || typeof message!=="string") {
-        return NextResponse.json({error: "Message is required"}, {status: 400});
+        return new Response(JSON.stringify({error: "Message is required"}), {
+            status: 400,
+            headers: {"Content-Type": "application/json"},
+        });
     }
 
-    const client = new AIProjectClient(endpoint, new DefaultAzureCredential());
-    const openai = client.getOpenAIClient({
-        azureConfig: {agentName: agentId, allowPreview: true},
-    });
+    const stream = orchestrate(message);
 
-    const response = await openai.responses.create({
-        model: "gpt-4.1",
-        input: message,
-    });
-
-    const outputText = response.output
-        .filter((item): item is typeof item & {type: "message"} => item.type === "message")
-        .flatMap((item) => item.content)
-        .filter((c): c is typeof c & {type: "output_text"} => c.type === "output_text")
-        .map((c) => c.text)
-        .join("");
-
-    return NextResponse.json({reply: outputText});
+    return new Response(stream, {
+        status: 200,
+        headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        }
+    })
 }
