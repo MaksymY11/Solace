@@ -3,6 +3,15 @@
 export type Intent = "work_authorization" | "visa_status" | "asylum" | 
                      "enforcement" | "family" | "naturalization" | "other"
 
+export interface Message {
+    id: string,
+    role: "user" | "assistant",
+    content: string,
+    triage?: TriageResult,
+    feedback?: FeedbackResult,
+    loading?: boolean,
+}
+
 export interface TriageResult {
     intent: Intent,
     facts: {
