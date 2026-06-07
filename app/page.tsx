@@ -7,7 +7,6 @@ import { Message, SSEEvent } from "@/lib/types"
 import { ChatInput } from "@/components/ChatInput"
 import { ChatMessages } from "@/components/ChatMessages"
 import { FollowUpForm } from "@/components/FollowUpForm"
-import { FollowUpQuestion } from "@/lib/types"
 
 export default function Home() {
   const [input, setInput] = useState("")
@@ -62,9 +61,16 @@ export default function Home() {
           const event = JSON.parse(json) as SSEEvent
           switch (event.type) {
             case "content": {
-              setMessages(prev => prev.map( m => 
-              m.id === assistantId ? {...m, content: m.content + event.data} : m
-              ))
+              setMessages(prev => prev.map(m => {
+                if (m.id !== assistantId) return m
+                const updated = {...m, content: m.content + event.data.text}
+                if (event.data.section) {
+                  const sc = {...(m.sectionContent ?? {})}
+                  sc[event.data.section] = (sc[event.data.section] ?? "") + event.data.text
+                  updated.sectionContent = sc
+                }
+                return updated
+              }))
               break
             }
             case "triage": {
@@ -76,6 +82,27 @@ export default function Home() {
             case "feedback": {
               setMessages(prev => prev.map( m =>
                 m.id === assistantId ? {...m, feedback: event.data} : m
+              ))
+              break
+            }
+            case "section": {
+              console.log("SECTION EVENT:", event.data)
+              setMessages(prev => prev.map(m =>
+                m.id === assistantId 
+                  ? {...m, reasoningSteps: [...(m.reasoningSteps ?? []), {type: "section", label: event.data.name}]} 
+                  : m
+              ))
+              break
+            }
+            case "tool_activity": {
+              console.log("TOOL EVENT:", event.data)
+              const query = event.data.query
+                ? `"${event.data.query}"`
+                : ""
+              setMessages(prev => prev.map(m =>
+                m.id === assistantId 
+                  ? {...m, reasoningSteps: [...(m.reasoningSteps ?? []), {type: "tool", label: event.data.tool, detail: query}]}
+                  : m
               ))
               break
             }
@@ -95,8 +122,8 @@ export default function Home() {
         const json = buffer.replace("data: ", "")
         const event = JSON.parse(json) as SSEEvent
         if (event.type === "content") {
-          setMessages(prev => prev.map( m => 
-            m.id === assistantId ? {...m, content: m.content + event.data} : m
+          setMessages(prev => prev.map( m =>
+            m.id === assistantId ? {...m, content: m.content + event.data.text} : m
           ))
         }
       }

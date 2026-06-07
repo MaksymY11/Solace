@@ -10,6 +10,28 @@ export interface Message {
     triage?: TriageResult,
     feedback?: FeedbackResult,
     loading?: boolean,
+    reasoningSteps?: {
+        type: "section" | "tool",
+        label: string,
+        detail?: string
+    }[],
+    sectionContent?: Record<string, string>
+}
+
+export interface ToolActivityEvent {
+    type: "tool_activity",
+    data: {
+        tool: string,
+        status: "started" | "completed",
+        query?: string
+    }
+}
+
+export interface SectionEvent {
+    type: "section",
+    data: {
+        name: "Analyzing your question..." | "Researching sources..." | "Applying to your situation..." | "Evaluating confidence..." | "Answering..."
+    }
 }
 
 export interface TriageResult {
@@ -47,14 +69,17 @@ export interface TriageEvent {
 export interface ReasoningStepEvent {
     type: "reasoning_step",
     data: {
-        step: "UNDERSTANDING" | "RESEARCHING" | "APPLYING" | "CONFIDENCE" | "ANSWER",
+        step: "Analyzing your question..." | "Researching sources..." | "Applying to your situation..." | "Evaluating confidence..." | "Answering...",
         content: string,
     },
 }
 
 export interface ContentEvent {
     type: "content",
-    data: string,
+    data: {
+        text: string,
+        section?: string,
+    },
 }
 
 export interface CitationEvent {
@@ -81,4 +106,5 @@ export interface DoneEvent {
 }
 
 export type SSEEvent = TriageEvent | ReasoningStepEvent | ContentEvent |
-                       CitationEvent | FeedbackEvent | ErrorEvent | DoneEvent
+                       CitationEvent | FeedbackEvent | ErrorEvent | DoneEvent |
+                       ToolActivityEvent | SectionEvent

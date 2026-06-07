@@ -1,7 +1,7 @@
 // Three-agent sequential pipeline: Triage → Research (streaming) → Feedback
 
 import { getClient } from "./foundryClient";
-import { TriageEvent, ErrorEvent, ContentEvent, FeedbackEvent, DoneEvent } from "./types";
+import { TriageEvent, ErrorEvent, ContentEvent, FeedbackEvent, DoneEvent, ToolActivityEvent, SectionEvent } from "./types";
 
 const solace_triage = process.env.AZURE_TRIAGE_AGENT_ID!;
 const solace_research = process.env.AZURE_RESEARCH_AGENT_ID!;
@@ -51,16 +51,44 @@ export function orchestrate(message:string): ReadableStream {
         // Research agent requires MCP tool approval for Web Search and Knowledge Base
         let approvalReqId = ""
         let responseId = ""
+        let currentSection = ""
+        let lastSentLength = 0
 
         async function streamResearch(researchResponse:any) {
             for await (const chunk of researchResponse) {
                 if (chunk.type === "response.output_text.delta") {
                     researchResult += chunk.delta;
-                    const event: ContentEvent = { type: "content", data: chunk.delta };
-                    controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
+                    const sectionMatch = researchResult.match(/\[([^\]]+\.\.\.)\]/g)
+                    if (sectionMatch) {
+                        const latestSection = sectionMatch[sectionMatch.length - 1].replace(/[\[\]]/g, "")
+                        if (latestSection !== currentSection) {
+                            currentSection = latestSection
+                            const event: SectionEvent = {type: "section", data: {name: currentSection as any}}
+                            controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
+                        }
+                    }
+                    const cleanedFull = researchResult
+                        .replace(/\[[^\]]+\.\.\.\]/g, "")
+                        .replace(/\[[^\]]*$/, "")
+                    const newContent = cleanedFull.slice(lastSentLength)
+                    if (newContent) {
+                        lastSentLength = cleanedFull.length
+                        const event: ContentEvent = {type: "content", data: {text: newContent, section: currentSection || undefined}};
+                        controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
+                    }
                 }
                 if (chunk.type === "response.output_item.added" && chunk.item.type === "mcp_approval_request") {
                     approvalReqId = chunk.item.id
+                    const toolName = chunk.item.name ?? "tool"
+                    let query: string | undefined
+                    try {
+                        const args = JSON.parse(chunk.item.arguments ?? "{}")
+                        query = args.queries?.[0] ?? args.query ?? undefined
+                    } catch {}
+                    const event: ToolActivityEvent = {
+                        type: "tool_activity", 
+                        data: {tool: toolName, status: "started", query}}
+                    controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
                 }
                 if (chunk.type === "response.completed") {
                     responseId = chunk.response.id
@@ -108,7 +136,7 @@ export function orchestrate(message:string): ReadableStream {
             if (researchResult.length === 0) {
                 const event: ContentEvent = {
                     type: "content",
-                    data: "I wasn't able to research this topic. Please try rephrasing your question with more detail."
+                    data: {text: "I wasn't able to research this topic. Please try rephrasing your question with more detail."}
                 };
                 controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
             }
