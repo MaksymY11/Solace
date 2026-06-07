@@ -1,7 +1,7 @@
 // Scrollable message list with auto-scroll on new content
 
 import { Message } from "@/lib/types"
-import { useRef,useEffect } from "react"
+import { useRef,useEffect, useState } from "react"
 import { ReasoningChain } from "./ReasoningChain"
 import { parseCitations } from "@/lib/parseCitations"
 
@@ -12,17 +12,27 @@ export function ChatMessages(props: {
     const bottomRef = useRef<HTMLDivElement>(null)
     const lastMsg = props.messages[props.messages.length-1]
     const isLoading = lastMsg?.loading === true
+    const [announce, setAnnounce] = useState("")
+    const lastAssistant = props.messages.filter(m => m.role === "assistant").at(-1)
     
     useEffect(() => {
         if (!isLoading && props.messages.length > 0) {
             bottomRef.current?.scrollIntoView({behavior:"smooth"})
-        }}, [isLoading])
+        }
+    }, [isLoading])
+
+    useEffect(() => {
+        if (lastAssistant && !lastAssistant.loading) {
+            setAnnounce(lastAssistant.content ?? "New assistant message")
+        }
+    }, [lastAssistant?.id, lastAssistant?.loading])
 
     return (
-        <div className="flex-1 overflow-y-auto pb-105">
+        <div className="flex-1 overflow-y-auto pb-105" role="log" aria-label="Chat messages">
+            <div aria-live="polite" className="sr-only">{announce}</div>
             {props.messages.map(msg => {
                 return (
-                    <div key={msg.id} className={msg.role === "user" ? "flex justify-end" : "text-left"}>
+                    <article key={msg.id} className={msg.role === "user" ? "flex justify-end" : "text-left"}>
                         <div className={msg.role === "user"
                             ? "inline-flex items-start justify-start bg-[#6bc6af] text-black rounded-lg px-4 py-2 text-left whitespace-pre-wrap"
                             : "text-black py-2 whitespace-pre-wrap"}>
@@ -87,7 +97,7 @@ export function ChatMessages(props: {
                         )}
                         {msg.loading && <div className="loader mt-4" />}
                         </div>
-                    </div>
+                    </article>
                 )
             })}
             <div ref={bottomRef} />

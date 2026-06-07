@@ -12,7 +12,7 @@ export function ReasoningChain(props: {
     const expanded = props.loading || toggled
 
     return (
-        <section>
+        <section aria-label="Reasoning chain">
             {expanded && (
                 <div>
                     {props.triage && (

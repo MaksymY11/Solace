@@ -155,10 +155,10 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center p-4 sm:p-8">
-      <div className="self-start flex items-center gap-2">
-        <img src={"solace_logo_cropped.png"} alt="Solace" className="h-12 w-auto" />
+      <header aria-label="Main header" className="self-start flex items-center gap-2">
+        <img src={"solace_logo_cropped.png"} alt="" className="h-12 w-auto" />
         <span className="text-xl font-semibold">Solace</span>
-      </div>
+      </header>
       <div className={isEmpty  
         ? "flex-1 flex items-center"
         : "flex-1 flex flex-col items-center w-full mt-16"
@@ -167,7 +167,7 @@ export default function Home() {
           {isEmpty ? (
             <>
               <div className="flex items-center justify-center gap-2">
-                <img src={"solace_logo_cropped.png"} alt="Solace" className="h-10 w-auto" />
+                <img src={"solace_logo_cropped.png"} alt="" className="h-10 w-auto" />
                 <span className="text-xl sm:text-3xl">Hello, I&apos;m <strong className="text-[#017b80]">Solace</strong></span>
               </div>
 
@@ -185,7 +185,7 @@ export default function Home() {
         </div>
       </div>
       {!isEmpty && (
-        <div className="fixed bottom-0 left-0 right-0 flex justify-center px-4 sm:p-8 pb-8 bg-[#fff7e1]">
+        <footer aria-label="Chat input footer" className="fixed bottom-0 left-0 right-0 flex justify-center px-4 sm:p-8 pb-8 bg-[#fff7e1]">
           <div className="w-full max-w-xl">
               {filteredQuestions.length > 0 && 
                 <FollowUpForm
@@ -201,11 +201,11 @@ export default function Home() {
               loading={loading}
               showStarters={messages.length === 0}
             />
-            <p className="text-xs text-[#cb936b] text-center mt-1">
+            <p className="text-xs text-[#8a6340] text-center mt-1">
               This is general legal information, not legal advice. For guidance specific to your situation, consult a qualified immigration attorney.
             </p>
           </div>
-        </div>
+        </footer>
       )}
     </main>
   )

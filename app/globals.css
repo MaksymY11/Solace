@@ -49,3 +49,16 @@ body {
   color: var(--foreground);
   font-family: var(--font-bricolage), Arial, Helvetica, sans-serif;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .loader {
+    animation: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
