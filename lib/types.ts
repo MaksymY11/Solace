@@ -53,6 +53,8 @@ export interface TriageResult {
     },
     complexity: "simple" | "moderate" | "complex",
     summary: string,
+    skip_research: boolean,
+    skip_research_summary: string,
 }
 
 export interface FollowUpQuestion {

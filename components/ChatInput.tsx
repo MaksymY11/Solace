@@ -8,6 +8,7 @@ export function ChatInput(props: {
     onSend: () => void,
     loading: boolean,
     showStarters: boolean,
+    onStop: () => void,
 }) {
 
     function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -27,7 +28,7 @@ export function ChatInput(props: {
                 placeholder={props.showStarters ? "Ask about your immigration rights..." : "Write a message..."}
                 aria-label="Message input"
                 />
-                {props.input.trim() && (
+                {props.input.trim() && !props.loading && (
                     <button 
                         className="absolute right-1 bottom-3 bg-[#017b80] text-[#fff7e1] rounded 
                                    px-3 py-1 hover:bg-[#015f63] text-sm animate-[fade-in-blur_0.5s_ease-out]"
@@ -36,6 +37,18 @@ export function ChatInput(props: {
                         aria-label="Send message"
                     >
                         {props.loading ? "Thinking..." : "Send"}
+                    </button>
+                )}
+                {props.loading && (
+                    <button
+                        className="absolute right-1 bottom-3 leading-none w-6 h-6 text-md rounded flex items-center justify-center
+                        bg-[#017b80] text-[#fff7e1] hover:bg-[#015f63] animate-[fade-in-blur_0.5s_ease-out]"
+                            onClick={props.onStop}
+                            aria-label="Abort execution"
+                    >
+                        <svg viewBox="0 0 10 10" className="w-2.5 h-2.5 fill-current">
+                            <rect width="10" height="10" rx="2"/>
+                        </svg>
                     </button>
                 )}
             </div>

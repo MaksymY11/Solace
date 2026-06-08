@@ -2,16 +2,24 @@
 
 // TODO: Add conversation memory (pass message history to research agent)
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Message, SSEEvent } from "@/lib/types"
 import { ChatInput } from "@/components/ChatInput"
 import { ChatMessages } from "@/components/ChatMessages"
 import { FollowUpForm } from "@/components/FollowUpForm"
 
 export default function Home() {
+  const abortRef = useRef<AbortController | null>(null)
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<Message[]>([])
   const loading = messages.length > 0 && messages[messages.length-1].loading === true
+
+  function handleAbort() {
+    abortRef.current?.abort()
+    setMessages(prev => prev.map(m =>
+      m.loading ? {...m, loading: false, content: m.content || "Response aborted."} : m
+    ))
+  }
 
   async function handleSend(overrideMessage?: string) {
     
@@ -26,14 +34,18 @@ export default function Home() {
       role: "user",
       content: text,
     }
+
     const assistantMessage: Message = {
       id: crypto.randomUUID(),
       role: "assistant",
       content: "",
       loading: true,
     }
+
     const assistantId = assistantMessage.id
     setMessages(prev => [...prev, userMessage, assistantMessage])
+    abortRef.current = new AbortController()
+
     try{
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -42,6 +54,7 @@ export default function Home() {
           message:text,
           history: messages.slice(-6).map(m=> ({role: m.role, content: m.content})),
         }),
+        signal: abortRef.current.signal
       })
 
       // Read loop
@@ -145,10 +158,17 @@ export default function Home() {
         }
       }
     }
-    catch {
-      setMessages(prev => prev.map( m =>
-        m.id === assistantId ? {...m, content: "Could not fetch a response. Please try again.", loading: false} : m
-      ))
+    
+    catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") {
+        setMessages(prev => prev.map( m =>
+          m.id === assistantId ? {...m, loading: false} : m
+        ))
+      } else {
+        setMessages(prev => prev.map( m =>
+          m.id === assistantId ? {...m, content: "Could not fetch a response. Please try again.", loading: false} : m
+        ))
+      }
     }
     finally {
       setMessages(prev => prev.map( m =>
@@ -164,9 +184,21 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center p-4 sm:p-8">
-      <header aria-label="Main header" className="self-start flex items-center gap-2">
-        <img src={"solace_logo_cropped.png"} alt="" className="h-12 w-auto" />
-        <span className="text-xl font-semibold">Solace</span>
+      <header aria-label="Main header" className="self-start flex items-center justify-between w-full">
+        <div className="flex items-center gap-2">
+          <img src={"solace_logo_cropped.png"} alt="" className="h-12 w-auto" />
+          <span className="text-xl font-semibold">Solace</span>
+        </div>
+        {!isEmpty && (
+          <button
+            aria-label="Start a new conversation"
+            onClick={() => setMessages([])}
+            className="group flex items-center gap-3 text-right px-3 py-2 rounded-md"
+          > 
+            <span className="text-lg border border-[#017b80] group-hover:bg-[#6bc6af] rounded p-2 h-7 w-7 flex items-center justify-center">+</span>
+            New chat
+          </button>
+        )}
       </header>
       <div className={isEmpty  
         ? "flex-1 flex items-center"
@@ -186,6 +218,7 @@ export default function Home() {
                 onSend={() => handleSend()} 
                 loading={loading}
                 showStarters={messages.length === 0}
+                onStop={() => handleAbort()}
               />
             </>
           ) : (
@@ -209,6 +242,7 @@ export default function Home() {
               onSend={() => handleSend()} 
               loading={loading}
               showStarters={messages.length === 0}
+              onStop={() => handleAbort()}
             />
             <p className="text-xs text-[#8a6340] text-center mt-1">
               This is general legal information, not legal advice. For guidance specific to your situation, consult a qualified immigration attorney.

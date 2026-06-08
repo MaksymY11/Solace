@@ -73,6 +73,19 @@ export function orchestrate(message:string, history: {role: string, content: str
             controller.close();
             return;
         }
+        
+        if (triageResult.skip_research) {
+            const event: ContentEvent = {
+                type: "content",
+                data: {text: triageResult.skip_research_summary},
+            };
+            controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
+
+            const done: DoneEvent = {type:"done"};
+            controller.enqueue(`data: ${JSON.stringify(done)}\n\n`);
+            controller.close()
+            return
+        }
 
         // Research agent helper
         // Research agent requires MCP tool approval for Web Search and Knowledge Base
