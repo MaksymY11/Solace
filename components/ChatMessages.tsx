@@ -38,12 +38,23 @@ export function ChatMessages(props: {
                             : "text-black py-2 whitespace-pre-wrap"}>
                         {msg.role === "assistant" ? (
                             <>
-                                <ReasoningChain
+                                {msg.distress && (
+                                    <>
+                                        <div className="rounded-lg border-l-4 border-[#017b80] bg-[#efe5cb] p-4 mt-4 mb-4">
+                                            <p className="font-semibold text-md">❤️ You don't have to go through this alone. Here are confidential resources available to you:</p>
+                                            <ul className="mt-1 text-md list-none">
+                                                {msg.distress.map((step, i) => (<li key={i}>{step}</li>))}
+                                            </ul>
+                                        </div>
+                                        <div className="text-center text-xl text-[#017b80] my-4">•  •  •</div>
+                                    </>
+                                )}
+                                {msg.triage && <ReasoningChain
                                     triage={msg.triage}
                                     loading={msg.loading ?? false}
                                     reasoningSteps={msg.reasoningSteps}
                                     sectionContent={msg.sectionContent}
-                                />
+                                />}
                                 {msg.loading ? null : (() => {
                                     const {cleanedText, citations} = parseCitations(msg.sectionContent?.["Answering..."] ?? msg.content, msg.sectionContent?.["Citations..."])
                                     return (
@@ -72,6 +83,7 @@ export function ChatMessages(props: {
                             <>
                                 {msg.feedback.needs_attorney && (
                                     <div className="rounded-lg border-l-4 border-[#f79f7b] bg-[#efe5cb] p-4 mt-4">
+                                        <p className="font-semibold text-md">Consult an attorney</p>
                                         <p className="mt-1 text-sm">{msg.feedback.next_steps[0]}</p>
                                     </div>
                                 )}

@@ -38,10 +38,18 @@ export function orchestrate(message:string): ReadableStream {
             controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
         }
         catch (e) {
-            const event: ErrorEvent = {
-                type: "error", 
-                data: {message:`Triage agent failed: ${e}`},
-            };
+            let event: ErrorEvent
+            if (e != null && typeof e === "object" && "status" in e && e.status === 400) {
+                event = {
+                    type: "error",
+                    data: {message:"I can't help with that request. I'm here to provide information about legal immigration pathways."},
+                };
+            } else {
+                event = {
+                    type: "error", 
+                    data: {message:`Triage agent failed: ${e}`},
+                };
+            }
             controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
             controller.close();
             return;

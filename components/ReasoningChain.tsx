@@ -47,7 +47,7 @@ export function ReasoningChain(props: {
                     <button
                         type="button"
                         onClick={() => setToggled(prev => !prev)}
-                        className="text-sm px-2 py-1 rounded-md border border-[#017b80] bg-[#017b80] text-[#fff7e1] hover:bg-[#015f63]"
+                        className="text-sm px-2 py-1 mb-2 rounded-md border border-[#017b80] bg-[#017b80] text-[#fff7e1] hover:bg-[#015f63]"
                     >
                         {toggled ? "Hide reasoning" : "Show reasoning"}
                     </button>

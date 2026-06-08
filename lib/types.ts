@@ -15,7 +15,8 @@ export interface Message {
         label: string,
         detail?: string
     }[],
-    sectionContent?: Record<string, string>
+    sectionContent?: Record<string, string>,
+    distress?: string[],
 }
 
 export interface ToolActivityEvent {
@@ -25,6 +26,11 @@ export interface ToolActivityEvent {
         status: "started" | "completed",
         query?: string
     }
+}
+
+export interface DistressEvent {
+    type: "distress",
+    data: {resources: string[]}
 }
 
 export interface SectionEvent {
@@ -107,4 +113,4 @@ export interface DoneEvent {
 
 export type SSEEvent = TriageEvent | ReasoningStepEvent | ContentEvent |
                        CitationEvent | FeedbackEvent | ErrorEvent | DoneEvent |
-                       ToolActivityEvent | SectionEvent
+                       ToolActivityEvent | SectionEvent | DistressEvent

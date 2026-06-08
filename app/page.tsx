@@ -113,6 +113,12 @@ export default function Home() {
               error = true
               break
             }
+            case "distress": {
+              setMessages(prev => prev.map( m =>
+                m.id === assistantId ? {...m, distress: event.data.resources} : m
+               ))
+               break
+            }
             case "done": {
               setMessages(prev => {
                 const msg = prev.find(m => m.id === assistantId)
