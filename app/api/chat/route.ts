@@ -6,7 +6,7 @@ import { detectDistress, sanitizeInput } from "@/lib/safety";
 import { DistressEvent } from "@/lib/types";
 
 export async function POST(req: NextRequest) {
-    let {message} = await req.json();
+    let {message, history} = await req.json();
     message = sanitizeInput(message)
 
     if (!message || typeof message!=="string") {
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     const distress = detectDistress(message);
-    const stream = orchestrate(message);
+    const stream = orchestrate(message, history, distress.isDistress);
     const bodyStream = distress.isDistress
         ? new ReadableStream({
             async start(controller) {

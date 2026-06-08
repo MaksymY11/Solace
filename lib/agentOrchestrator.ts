@@ -1,5 +1,6 @@
 // Three-agent sequential pipeline: Triage → Research (streaming) → Feedback
 
+import { auditLog } from "./auditLog";
 import { getClient } from "./foundryClient";
 import { TriageEvent, ErrorEvent, ContentEvent, FeedbackEvent, DoneEvent, ToolActivityEvent, SectionEvent } from "./types";
 
@@ -7,10 +8,20 @@ const solace_triage = process.env.AZURE_TRIAGE_AGENT_ID!;
 const solace_research = process.env.AZURE_RESEARCH_AGENT_ID!;
 const solace_feedback = process.env.AZURE_FEEDBACK_AGENT_ID!;
 
-export function orchestrate(message:string): ReadableStream {
+export function orchestrate(message:string, history: {role: string, content: string}[], distress: boolean): ReadableStream {
     return new ReadableStream({async start(controller) {
 
+        const history_formatted = history.length > 0
+            ? `CONVERSATION HISTORY:\n${history.map(m => `${m.role}: ${m.content}`).join("\n")}\n\n`
+            : ""
+
         //Triage Agent (non-streaming)
+        const triage_input = 
+        `${history_formatted}
+
+        USER QUESTION:
+        ${message}
+        `
         const client = getClient();
         let openai = client.getOpenAIClient({
             azureConfig: {agentName:solace_triage, allowPreview: true},
@@ -20,7 +31,7 @@ export function orchestrate(message:string): ReadableStream {
         try {
             const triage_response = await openai.responses.create({
                 model: "gpt-4.1-mini",
-                input: message,
+                input: triage_input,
             });
 
             const triage_text = triage_response.output
@@ -44,11 +55,19 @@ export function orchestrate(message:string): ReadableStream {
                     type: "error",
                     data: {message:"I can't help with that request. I'm here to provide information about legal immigration pathways."},
                 };
+                auditLog({
+                    user: {query: message, distressDetected: distress},
+                    errors: {contentFiltered: true, error: event.data.message},
+                })
             } else {
                 event = {
                     type: "error", 
                     data: {message:`Triage agent failed: ${e}`},
-                };
+                }; 
+                auditLog({
+                    user: {query: message, distressDetected: distress},
+                    errors: {contentFiltered: false, error: event.data.message},
+                })
             }
             controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
             controller.close();
@@ -62,6 +81,7 @@ export function orchestrate(message:string): ReadableStream {
         let currentSection = ""
         let newSection = ""
         let lastSentLength = 0
+        let toolEvents: ToolActivityEvent[] = [] // for logging
 
         async function streamResearch(researchResponse:any) {
             for await (const chunk of researchResponse) {
@@ -103,6 +123,7 @@ export function orchestrate(message:string): ReadableStream {
                     const event: ToolActivityEvent = {
                         type: "tool_activity", 
                         data: {tool: toolName, status: "started", query}}
+                    toolEvents.push(event)
                     controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
                 }
                 if (chunk.type === "response.completed") {
@@ -116,7 +137,9 @@ export function orchestrate(message:string): ReadableStream {
             azureConfig: {agentName: solace_research, allowPreview: true},
         });
         const research_input = 
-        `TRIAGE JSON:
+        `${history_formatted}
+
+        TRIAGE JSON:
         ${JSON.stringify(triageResult)}
 
         USER QUESTION:
@@ -161,6 +184,11 @@ export function orchestrate(message:string): ReadableStream {
                 type: "error", 
                 data: {message:`Research agent failed: ${e}`},
             };
+            auditLog({
+                user: {query: message, distressDetected: distress},
+                assistant: {triage: triageResult, research: {result: researchResult, toolCalls: toolEvents}},
+                errors: {contentFiltered: false, error: event.data.message},
+            })
             controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
             controller.close();
             return;
@@ -208,10 +236,32 @@ export function orchestrate(message:string): ReadableStream {
                 type: "error", 
                 data: {message:`Feedback agent failed: ${e}`},
             };
+            auditLog({
+                user: {query: message, distressDetected: distress},
+                assistant: {triage: triageResult, research: {result: researchResult, toolCalls: toolEvents}, feedback: feedbackResult}, 
+                errors: {contentFiltered: false, error: event.data.message},
+            })
             controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
             controller.close();
             return;
         }
+
+        // Logging relevant information
+        const entry = {
+            user: {
+                query: message,
+                distressDetected: distress,
+            },
+            assistant: {
+                triage: triageResult,
+                research: {
+                    result: researchResult,
+                    toolCalls: toolEvents,
+                },
+                feedback: feedbackResult,
+            },
+        }
+        auditLog(entry)
 
         // Done Flag
         const event: DoneEvent = {

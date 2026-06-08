@@ -38,7 +38,10 @@ export default function Home() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({message:text}),
+        body: JSON.stringify({
+          message:text,
+          history: messages.slice(-6).map(m=> ({role: m.role, content: m.content})),
+        }),
       })
 
       // Read loop
