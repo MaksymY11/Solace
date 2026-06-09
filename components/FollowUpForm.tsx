@@ -1,3 +1,6 @@
+// Paginated follow-up form: one question at a time with multiple-choice options,
+// free-text input, and skip/back navigation. Auto-submits formatted Q&A on last answer.
+
 import { FollowUpQuestion } from "@/lib/types"
 import { useState, useEffect } from "react"
 
@@ -87,6 +90,7 @@ export function FollowUpForm(props: {
                 >
                     <span className="text-xs text-gray-400 border border-[#017b80] rounded p-2 h-7 w-7 flex items-center justify-center">✎</span>
                     <input
+                        aria-label="Type your answer"
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         placeholder="Your answer"

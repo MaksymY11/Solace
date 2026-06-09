@@ -8,6 +8,7 @@ const solace_triage = process.env.AZURE_TRIAGE_AGENT_ID!;
 const solace_research = process.env.AZURE_RESEARCH_AGENT_ID!;
 const solace_feedback = process.env.AZURE_FEEDBACK_AGENT_ID!;
 
+
 export function orchestrate(message:string, history: {role: string, content: string}[], distress: boolean): ReadableStream {
     return new ReadableStream({async start(controller) {
 
@@ -73,7 +74,8 @@ export function orchestrate(message:string, history: {role: string, content: str
             controller.close();
             return;
         }
-        
+
+        // Non-immigration or greeting queries: triage returns a friendly redirect, skip research + feedback
         if (triageResult.skip_research) {
             const event: ContentEvent = {
                 type: "content",
@@ -87,14 +89,14 @@ export function orchestrate(message:string, history: {role: string, content: str
             return
         }
 
-        // Research agent helper
-        // Research agent requires MCP tool approval for Web Search and Knowledge Base
+        // Foundry MCP tools (Web Search, KB) send mcp_approval_request chunks and halt
+        // until approved. This helper auto-approves and continues streaming.
         let approvalReqId = ""
         let responseId = ""
         let currentSection = ""
         let newSection = ""
         let lastSentLength = 0
-        let toolEvents: ToolActivityEvent[] = [] // for logging
+        const toolEvents: ToolActivityEvent[] = [] // for logging
 
         async function streamResearch(researchResponse:any) {
             for await (const chunk of researchResponse) {
@@ -108,6 +110,7 @@ export function orchestrate(message:string, history: {role: string, content: str
                         }
                     }
 
+                    // Strip complete [Section...] headers, hold back incomplete ones split across chunks
                     const cleanedFull = researchResult
                         .replace(/\[[^\]]+\.\.\.\]/g, "")
                         .replace(/\[[^\]]*$/, "")
@@ -118,9 +121,10 @@ export function orchestrate(message:string, history: {role: string, content: str
                         controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
                     }
 
+                    // Flush content under old section before switching to avoid cross-section leaking
                     if (newSection) {
                         currentSection = newSection
-                        const event: SectionEvent = {type: "section", data: {name: currentSection as any}}
+                        const event: SectionEvent = {type: "section", data: {name: currentSection as SectionEvent["data"]["name"]}}
                         controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
                         newSection = ""
                     }
@@ -168,6 +172,7 @@ export function orchestrate(message:string, history: {role: string, content: str
 
             await streamResearch(researchResponse)
 
+            // Re-stream after each MCP tool approval until no more approvals are pending
             while (approvalReqId) {
                 const reqId = approvalReqId
                 approvalReqId = ""

@@ -1,4 +1,5 @@
-// Shared types for SSE streaming pipeline and chat messages
+// Shared types for SSE streaming pipeline, chat messages, and agent responses.
+// SSE events are emitted by agentOrchestrator.ts and consumed by page.tsx via fetch + ReadableStream.
 
 export type Intent = "work_authorization" | "visa_status" | "asylum" | 
                      "enforcement" | "family" | "naturalization" | "other"

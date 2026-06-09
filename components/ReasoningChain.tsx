@@ -1,3 +1,6 @@
+// Inline reasoning visualization: triage summary box + timeline of tool calls and section steps.
+// Expanded during loading, collapses on completion with show/hide toggle.
+// "Answering..." and "Citations..." sections are filtered out (rendered separately in ChatMessages).
 
 import { TriageResult } from "@/lib/types"
 import { useState } from "react"

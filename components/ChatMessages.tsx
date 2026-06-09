@@ -1,4 +1,5 @@
-// Scrollable message list with auto-scroll on new content
+// Message list: renders user bubbles, assistant responses (reasoning chain → streaming answer →
+// cleaned answer with citations), distress banners, attorney referrals, and follow-up prompts.
 
 import { Message } from "@/lib/types"
 import { useRef,useEffect, useState } from "react"
@@ -21,6 +22,7 @@ export function ChatMessages(props: {
         }
     }, [isLoading])
 
+    // Screen reader announcement: fires once when an assistant message finishes loading
     useEffect(() => {
         if (lastAssistant && !lastAssistant.loading) {
             setAnnounce(lastAssistant.content ?? "New assistant message")
@@ -42,7 +44,7 @@ export function ChatMessages(props: {
                                     <>
                                         <div className="rounded-lg border-l-4 border-[#017b80] bg-[#efe5cb] p-4 mt-4 mb-4"
                                              style={{animation: "fade-in-blur 0.5s ease-out both"}}>
-                                            <p className="font-semibold text-md">❤️ You don't have to go through this alone. Here are confidential resources available to you:</p>
+                                            <p className="font-semibold text-md">❤️ You don&apos;t have to go through this alone. Here are confidential resources available to you:</p>
                                             <ul className="mt-1 text-md list-none">
                                                 {msg.distress.map((step, i) => (<li key={i}>{step}</li>))}
                                             </ul>
@@ -56,6 +58,7 @@ export function ChatMessages(props: {
                                     reasoningSteps={msg.reasoningSteps}
                                     sectionContent={msg.sectionContent}
                                 />}
+                                {/* Stream raw answer text in real-time during loading; replaced by cleaned version on completion */}
                                 {msg.loading && msg.sectionContent?.["Answering..."] && (
                                     <p className="mt-4 whitespace-pre-wrap animate-fade-in">
                                         {msg.sectionContent["Answering..."]}
@@ -113,7 +116,7 @@ export function ChatMessages(props: {
                                 )}
                             </>
                         )}
-                        {msg.loading && <div className="loader mt-4" />}
+                        {msg.loading && <div role="status" aria-label="Loading response" className="loader mt-4" />}
                         </div>
                     </article>
                 )

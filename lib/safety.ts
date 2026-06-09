@@ -1,4 +1,5 @@
-
+// Keyword-based crisis detection (DV, self-harm, trafficking) and input sanitization.
+// Prompt injection is handled server-side by Azure Foundry's custom content guardrail.
 
 export function detectDistress(input: string): {
     isDistress: boolean,
@@ -26,8 +27,8 @@ export function detectDistress(input: string): {
     }
 }
 
+// Strip control characters (preserving newline/tab/CR) and cap length. Returns null if empty.
 export function sanitizeInput(input: string): string | null {
-
     const trimmed = input.trim()
     if (!trimmed) return null
     const cleaned = trimmed.replace(/[\x00-\x08\x0C\x0E-\x1F\x7F]/g, "")

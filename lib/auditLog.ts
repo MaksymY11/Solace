@@ -1,4 +1,7 @@
-import { TriageResult, FeedbackResult, ToolActivityEvent, ErrorEvent } from "./types"
+// Structured JSON audit log for every interaction. Outputs to console.log (viewable in
+// Vercel logs in production). Partial logs are written on early pipeline failure.
+
+import { TriageResult, FeedbackResult, ToolActivityEvent } from "./types"
 
 export function auditLog(entry: {
     user: {

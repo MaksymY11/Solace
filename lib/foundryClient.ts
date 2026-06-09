@@ -1,4 +1,5 @@
-// Singleton Azure Foundry client
+// Singleton AIProjectClient — reused across all agent calls to avoid repeated auth handshakes.
+// Uses DefaultAzureCredential locally (az login), swap to ClientSecretCredential for Vercel.
 
 import { AIProjectClient } from "@azure/ai-projects";
 import { DefaultAzureCredential } from "@azure/identity";

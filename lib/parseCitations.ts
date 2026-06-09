@@ -1,3 +1,6 @@
+// Parses the research agent's structured [Citations...] section into clickable pills.
+// Cleans answer text by stripping markdown links, Bing markers, and orphaned punctuation.
+
 export interface Citation {
   name: string;
   url: string;
@@ -10,7 +13,7 @@ export interface ParsedCitations {
 
 export function parseCitations(answerText: string, citationsSection?: string): ParsedCitations {
 
-  let cleanedText = answerText
+  const cleanedText = answerText
       .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
       .replace(/\s*\(\s*\)/g, '')
       .replace(/【[^】]*】/g, '')

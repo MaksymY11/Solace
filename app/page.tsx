@@ -1,12 +1,11 @@
 "use client"
 
-// TODO: Add conversation memory (pass message history to research agent)
-
 import { useState, useRef } from "react"
 import { Message, SSEEvent } from "@/lib/types"
 import { ChatInput } from "@/components/ChatInput"
 import { ChatMessages } from "@/components/ChatMessages"
 import { FollowUpForm } from "@/components/FollowUpForm"
+import Image from "next/image"
 
 export default function Home() {
   const abortRef = useRef<AbortController | null>(null)
@@ -47,22 +46,29 @@ export default function Home() {
     setMessages(prev => [...prev, userMessage, assistantMessage])
     abortRef.current = new AbortController()
 
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined
     try{
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
           message:text,
-          history: messages.slice(-6).map(m=> ({role: m.role, content: m.content})),
+          history: [...messages, userMessage].slice(-6).map(m=> ({role: m.role, content: m.content})),
         }),
         signal: abortRef.current.signal
       })
+      if (!response.ok) {
+        setMessages(prev => prev.map( m =>
+          m.id === assistantId ? {...m, content: "Could not fetch a response. Please try again."} : m
+        ))
+        return
+      }
 
       // Read loop
       if (!response.body) throw new Error("No response body")
       let buffer = ""
       let error = false
-      const reader = response.body.getReader()
+      reader = response.body.getReader()
       const decoder = new TextDecoder()
       while (true) {
         if (error) break
@@ -162,6 +168,7 @@ export default function Home() {
 
     catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") {
+        reader?.cancel()
         setMessages(prev => prev.map( m =>
           m.id === assistantId ? {...m, loading: false} : m
         ))
@@ -187,7 +194,7 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center p-4 sm:p-8">
       <header aria-label="Main header" className="self-start flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
-          <img src={"solace_logo_cropped.png"} alt="" className="h-12 w-auto" />
+          <Image width={200} height={200} src={"/solace_logo_cropped.png"} alt="Solace logo" className="h-12 w-auto" />
           <span className="text-xl font-semibold">Solace</span>
         </div>
         {!isEmpty && (
@@ -211,7 +218,7 @@ export default function Home() {
           {isEmpty ? (
             <>
               <div className="flex items-center justify-center gap-2">
-                <img src={"solace_logo_cropped.png"} alt="" className="h-10 w-auto" />
+                <Image width={200} height={200} src={"/solace_logo_cropped.png"} alt="Solace logo" className="h-10 w-auto" />
                 <span className="text-xl sm:text-3xl">Hello, I&apos;m <strong className="text-[#017b80]">Solace</strong></span>
               </div>
 

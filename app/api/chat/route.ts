@@ -1,4 +1,4 @@
-// SSE Streaming endpoint for chat
+// SSE endpoint: sanitize → detect distress → orchestrate agent pipeline → stream events
 
 import { NextRequest } from "next/server";
 import { orchestrate } from "@/lib/agentOrchestrator";
@@ -6,7 +6,9 @@ import { detectDistress, sanitizeInput } from "@/lib/safety";
 import { DistressEvent } from "@/lib/types";
 
 export async function POST(req: NextRequest) {
-    let {message, history} = await req.json();
+    const body = await req.json();
+    const history = body.history;
+    let message = body.message;
     message = sanitizeInput(message)
 
     if (!message || typeof message!=="string") {
@@ -18,6 +20,8 @@ export async function POST(req: NextRequest) {
 
     const distress = detectDistress(message);
     const stream = orchestrate(message, history, distress.isDistress);
+
+    // If distress detected, prepend crisis resources event before the agent stream
     const bodyStream = distress.isDistress
         ? new ReadableStream({
             async start(controller) {
