@@ -10,6 +10,7 @@ import { FollowUpForm } from "@/components/FollowUpForm"
 
 export default function Home() {
   const abortRef = useRef<AbortController | null>(null)
+  const [showForm, setShowForm] = useState(true)
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<Message[]>([])
   const loading = messages.length > 0 && messages[messages.length-1].loading === true
@@ -158,7 +159,7 @@ export default function Home() {
         }
       }
     }
-    
+
     catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") {
         setMessages(prev => prev.map( m =>
@@ -195,7 +196,9 @@ export default function Home() {
             onClick={() => setMessages([])}
             className="group flex items-center gap-3 text-right px-3 py-2 rounded-md"
           > 
-            <span className="text-lg border border-[#017b80] group-hover:bg-[#6bc6af] rounded p-2 h-7 w-7 flex items-center justify-center">+</span>
+            <span className="swipe-fill text-lg border border-[#017b80] rounded p-2 h-7 w-7 flex items-center justify-center">
+              <span>+</span>
+            </span>
             New chat
           </button>
         )}
@@ -229,10 +232,11 @@ export default function Home() {
       {!isEmpty && (
         <footer aria-label="Chat input footer" className="fixed bottom-0 left-0 right-0 flex justify-center px-4 sm:p-8 pb-8 bg-[#fff7e1]">
           <div className="w-full max-w-xl">
-              {filteredQuestions.length > 0 && 
+              {showForm && filteredQuestions.length > 0 && 
                 <FollowUpForm
                   questions={filteredQuestions}
                   onSubmit={(formatted) => handleSend(formatted)}
+                  onDismiss={() => setShowForm(false)}
                 />
               }
 

@@ -29,14 +29,19 @@ export function ReasoningChain(props: {
                     )}
                     {(props.reasoningSteps ?? []).filter(s => s.label !== "Answering..." && s.label !== "Citations...").map((step, i, arr) => {
                         const isLast = i === arr.length - 1
-                        const icon = props.loading && isLast ? "●" : "✓"
                         const detail = step.type === "tool"
                             ? step.detail
                             : (props.sectionContent?.[step.label] ?? null)
                         return (
                             <div key={i} className="mb-2 text-sm">
-                                <p><span>{icon}</span> {step.label}</p>
-                                {detail && <p className="text-xs text-gray-500 ml-5 whitespace-pre-wrap">{detail}</p>}
+                                <p className="flex items-center gap-1.5">
+                                    {props.loading && isLast
+                                        ? <span className="squishy-loader inline-block w-3 h-3 shrink-0" style={{background: "#017b80"}}/>
+                                        : <span className="inline-block w-2 h-2 shrink-0 rounded-full bg-[#017b80]"></span>
+                                    }
+                                    {step.label}
+                                </p>
+                                {detail && <p className="text-xs text-gray-500 ml-5 whitespace-pre-wrap animate-fade-in">{detail}</p>}
                             </div>
                         )
                     })}

@@ -40,7 +40,8 @@ export function ChatMessages(props: {
                             <>
                                 {msg.distress && (
                                     <>
-                                        <div className="rounded-lg border-l-4 border-[#017b80] bg-[#efe5cb] p-4 mt-4 mb-4">
+                                        <div className="rounded-lg border-l-4 border-[#017b80] bg-[#efe5cb] p-4 mt-4 mb-4"
+                                             style={{animation: "fade-in-blur 0.5s ease-out both"}}>
                                             <p className="font-semibold text-md">❤️ You don't have to go through this alone. Here are confidential resources available to you:</p>
                                             <ul className="mt-1 text-md list-none">
                                                 {msg.distress.map((step, i) => (<li key={i}>{step}</li>))}
@@ -55,6 +56,11 @@ export function ChatMessages(props: {
                                     reasoningSteps={msg.reasoningSteps}
                                     sectionContent={msg.sectionContent}
                                 />}
+                                {msg.loading && msg.sectionContent?.["Answering..."] && (
+                                    <p className="mt-4 whitespace-pre-wrap animate-fade-in">
+                                        {msg.sectionContent["Answering..."]}
+                                    </p>
+                                )}
                                 {msg.loading ? null : (() => {
                                     const {cleanedText, citations} = parseCitations(msg.sectionContent?.["Answering..."] ?? msg.content, msg.sectionContent?.["Citations..."])
                                     return (

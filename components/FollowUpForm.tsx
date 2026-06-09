@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 export function FollowUpForm(props: {
     questions: FollowUpQuestion[],
     onSubmit: (formatted: string) => void,
+    onDismiss: () => void,
 }) {
     const [currIdx, setCurrIdx] = useState(0)
     const [answers, setAnswers] = useState<string[]>(new Array(props.questions.length).fill(""))
@@ -57,6 +58,13 @@ export function FollowUpForm(props: {
                         aria-label="Next (no preference)"
                     >
                         →
+                    </button>
+                    <button
+                        type="button"
+                        onClick={props.onDismiss}
+                        className="items-center h-6 w-6 rounded-md border border-[#017b80] text-[#017b80] text-md hover:bg-[#017b80] hover:text-white"
+                    >
+                        {"\u00d7"}
                     </button>
                 </div>
             </div>
