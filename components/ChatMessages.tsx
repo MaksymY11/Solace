@@ -61,7 +61,7 @@ export function ChatMessages(props: {
                                 />}
                                 {/* Stream markdown-rendered answer text in real-time during loading; replaced by cleaned version on completion */}
                                 {msg.loading && msg.sectionContent?.["Answering..."] && (
-                                    <div className="mt-4 animate-fade-in prose max-w-none text-black">
+                                    <div className="mt-4 animate-fade-in prose max-w-none text-black prose-li:text-black prose-ol:text-black prose-ul:text-black prose-headings:text-black prose-p:text-black prose-a:text-[#017b80]" style={{"--tw-prose-bullets":"black","--tw-prose-counters":"black"} as React.CSSProperties}>
                                         <Markdown>{msg.sectionContent["Answering..."]}</Markdown>
                                     </div>
                                 )}

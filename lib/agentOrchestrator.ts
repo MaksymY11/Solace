@@ -29,7 +29,7 @@ export function orchestrate(message:string, history: {role: string, content: str
             azureConfig: {agentName:solace_triage, allowPreview: true},
         });
 
-        let triageResult;
+        let triageResult: any;
         try {
             const triage_response = await openai.responses.create({
                 model: "gpt-4.1-mini",
@@ -127,8 +127,15 @@ export function orchestrate(message:string, history: {role: string, content: str
                         query = args.queries?.[0] ?? args.query ?? undefined
                     } catch {}
                     const event: ToolActivityEvent = {
-                        type: "tool_activity", 
+                        type: "tool_activity",
                         data: {tool: toolName, status: "started", query}}
+                    toolEvents.push(event)
+                    controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
+                }
+                if (chunk.type === "response.output_item.added" && chunk.item.type === "web_search_call") {
+                    const event: ToolActivityEvent = {
+                        type: "tool_activity",
+                        data: {tool: chunk.item.type, status: "started", query: triageResult.summary}}
                     toolEvents.push(event)
                     controller.enqueue(`data: ${JSON.stringify(event)}\n\n`)
                 }

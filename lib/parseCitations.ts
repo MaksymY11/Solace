@@ -17,7 +17,7 @@ export function parseCitations(answerText: string, citationsSection?: string): P
       .replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1')
       .replace(/\s*\(\s*\)/g, '')
       .replace(/【[^】]*】/g, '')
-      .replace(/[^\S\n]+/g, ' ')
+      .replace(/(?<=\S)[^\S\n]+/g, ' ')
       .replace(/\n{3,}/g, '\n\n')
       .replace(/ +\./g, '.')
       .trim()
