@@ -13,8 +13,9 @@
   <img src="https://img.shields.io/badge/Next.js-16-white?logo=next.js&logoColor=black" alt="Next.js 16" />
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Azure%20AI%20Foundry-gpt--4.1-5E5CE6?logo=microsoft-azure&logoColor=white" alt="Azure AI Foundry" />
+  <img src="https://github.com/MaksymY11/solace-reasoning/actions/workflows/test.yml/badge.svg" alt="Tests & Lint" />
   <img src="https://img.shields.io/badge/Vercel-Deployed-E44D90?logo=vercel&logoColor=white" alt="Vercel" />
-  <img src="https://img.shields.io/badge/License-MIT-2ea043" alt="MIT License" />
+  <img src="https://img.shields.io/badge/License-GPL--3.0-2ea043" alt="GPL-3.0 License" />
 </p>
 
 <p align="center">
@@ -244,4 +245,4 @@ solace/
 
 ## 📄 License
 
-MIT
+GPL-3.0
