@@ -2,7 +2,7 @@
 // cleaned answer with citations), distress banners, attorney referrals, and follow-up prompts.
 
 import { Message } from "@/lib/types"
-import { useRef,useEffect, useState } from "react"
+import { useRef, useEffect, useMemo } from "react"
 import { ReasoningChain } from "./ReasoningChain"
 import { parseCitations } from "@/lib/parseCitations"
 import Markdown from "react-markdown"
@@ -14,21 +14,21 @@ export function ChatMessages(props: {
     const bottomRef = useRef<HTMLDivElement>(null)
     const lastMsg = props.messages[props.messages.length-1]
     const isLoading = lastMsg?.loading === true
-    const [announce, setAnnounce] = useState("")
     const lastAssistant = props.messages.filter(m => m.role === "assistant").at(-1)
     
     useEffect(() => {
         if (!isLoading && props.messages.length > 0) {
             bottomRef.current?.scrollIntoView({behavior:"smooth"})
         }
-    }, [isLoading])
+    }, [isLoading, props.messages.length])
 
     // Screen reader announcement: fires once when an assistant message finishes loading
-    useEffect(() => {
+    const announce = useMemo(() => {
         if (lastAssistant && !lastAssistant.loading) {
-            setAnnounce(lastAssistant.content ?? "New assistant message")
+            return lastAssistant.content ?? "New assistant message"
         }
-    }, [lastAssistant?.id, lastAssistant?.loading])
+        return ""
+    }, [lastAssistant])
 
     return (
         <div className="flex-1 overflow-y-auto pb-105" role="log" aria-label="Chat messages">

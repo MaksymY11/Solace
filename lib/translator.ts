@@ -37,7 +37,7 @@ export async function translateTexts(texts: string[], targetLang: string) {
         }
     )
     const data = await response.json()
-    return data.map((d:any) => d.translations[0].text)
+    return data.map((d: {translations: {text: string}[]}) => d.translations[0].text)
 }
 
 export async function translateResponse(
@@ -82,7 +82,6 @@ export async function translateResponse(
     for (const key of factKeysWithValues) {
         texts.push(triageResult.facts[key]!)
     }
-    const triageCount = 1 + factKeysWithValues.length
 
     // 2. Research section content
     const sectionKeys = Object.keys(sectionContent)

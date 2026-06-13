@@ -2,7 +2,7 @@
 // free-text input, and skip/back navigation. Auto-submits formatted Q&A on last answer.
 
 import { FollowUpQuestion } from "@/lib/types"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
 export function FollowUpForm(props: {
     questions: FollowUpQuestion[],
@@ -28,15 +28,16 @@ export function FollowUpForm(props: {
             props.onSubmit(buffer.trim())
         }
         else {
-            setCurrIdx(prev => prev + 1)
+            goToPage(currIdx + 1)
         }
     }
 
-    useEffect(() => {
-        const stored = answers[currIdx] || ""
-        const isOption = props.questions[currIdx]?.options?.includes(stored)
+    function goToPage(idx: number) {
+        setCurrIdx(idx)
+        const stored = answers[idx] || ""
+        const isOption = props.questions[idx]?.options?.includes(stored)
         setInputValue(isOption || stored === "[No preference]" ? "" : stored)
-    }, [currIdx])
+    }
     
 
     return (
@@ -46,7 +47,7 @@ export function FollowUpForm(props: {
                 <div className="flex items-center gap-2 shrink-0">
                     <button
                         type="button"
-                        onClick={() => setCurrIdx(prev => prev-1)}
+                        onClick={() => goToPage(currIdx - 1)}
                         disabled={currIdx === 0}
                         className="text-sm text-[#017b80] hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
                         aria-label="Previous"

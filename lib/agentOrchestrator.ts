@@ -4,7 +4,7 @@ import { auditLog } from "./auditLog";
 import { getClient } from "./foundryClient";
 import { StreamParser } from "./streamParser";
 import { translateResponse } from "./translator";
-import { TriageEvent, ErrorEvent, ContentEvent, FeedbackEvent, DoneEvent, ToolActivityEvent, SectionEvent, TranslateEvent } from "./types";
+import { TriageEvent, ErrorEvent, ContentEvent, FeedbackEvent, DoneEvent, ToolActivityEvent, SectionEvent, TranslateEvent, TriageResult } from "./types";
 
 const solace_triage = process.env.AZURE_TRIAGE_AGENT_ID!;
 const solace_research = process.env.AZURE_RESEARCH_AGENT_ID!;
@@ -30,7 +30,7 @@ export function orchestrate(message:string, history: {role: string, content: str
             azureConfig: {agentName:solace_triage, allowPreview: true},
         });
 
-        let triageResult: any;
+        let triageResult: TriageResult;
         try {
             const triage_response = await openai.responses.create({
                 model: "gpt-4.1-mini",
@@ -98,7 +98,8 @@ export function orchestrate(message:string, history: {role: string, content: str
         const parser = new StreamParser()
         const toolEvents: ToolActivityEvent[] = [] // for logging
 
-        async function streamResearch(researchResponse:any) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        async function streamResearch(researchResponse: AsyncIterable<Record<string, any>>) {
             for await (const chunk of researchResponse) {
                 if (chunk.type === "response.output_text.delta") {
                     researchResult += chunk.delta;
